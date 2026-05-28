@@ -1,0 +1,50 @@
+{
+  "name": "tusk-memory",
+  "version": "1.0.0",
+  "description": "TypeScript SDK for decentralized shared agent memory and Walrus archival",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "prepublishOnly": "npm run build",
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yashvikram30/tusk-memory.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yashvikram30/tusk-memory/issues"
+  },
+  "homepage": "https://github.com/yashvikram30/tusk-memory#readme",
+  "keywords": [
+    "memwal",
+    "walrus",
+    "memory",
+    "agent",
+    "ai",
+    "decentralized",
+    "sui"
+  ],
+  "author": "Yash Vikram",
+  "license": "MIT",
+  "devDependencies": {
+    "dotenv": "^16.4.5",
+    "tsup": "^8.1.0",
+    "typescript": "^5.4.5"
+  }
+}
