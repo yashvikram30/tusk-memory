@@ -1,9 +1,32 @@
+import { MemWal } from '@mysten-incubation/memwal';
+
+declare var process: any;
+
+let memwalClient: MemWal | null = null;
+
+function getClient(): MemWal {
+  if (memwalClient) return memwalClient;
+
+  const key = process.env.MEMWAL_PRIVATE_KEY;
+  const accountId = process.env.MEMWAL_ACCOUNT_ID;
+
+  if (!key || !accountId) {
+    throw new Error('MEMWAL_PRIVATE_KEY and MEMWAL_ACCOUNT_ID must be set in the environment');
+  }
+
+  memwalClient = MemWal.create({
+    key,
+    accountId,
+  });
+  return memwalClient;
+}
+
 /**
  * Store data in the MemWal decentralized relayer memory.
  * 
  * @param namespace - The memory namespace/workspace ID.
  * @param data - The memory payload to be stored.
- * @param apiKey - Optional API key/token for authorization.
+ * @param apiKey - Unused parameter retained for signature compatibility.
  * @returns The parsed JSON response from the relayer.
  */
 export async function saveMemory(
@@ -11,88 +34,33 @@ export async function saveMemory(
   data: any,
   apiKey?: string
 ): Promise<any> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-
-  if (apiKey) {
-    headers['Authorization'] = apiKey.includes(' ') ? apiKey : `Bearer ${apiKey}`;
-  }
-
-  const response = await fetch('https://api.memwal.ai/v1/memory', {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ namespace, data }),
-  });
-
-  if (!response.ok) {
-    let errorDetails = '';
-    try {
-      errorDetails = await response.text();
-    } catch {
-      // Ignore if text body reading fails
-    }
-    throw new Error(
-      `Failed to save memory to MemWal (HTTP ${response.status}): ${response.statusText}${
-        errorDetails ? ` - ${errorDetails}` : ''
-      }`
-    );
-  }
-
-  return response.json();
+  const client = getClient();
+  const text = JSON.stringify(data);
+  const accepted = await client.remember(text, namespace);
+  // Wait for the background job to complete to match retrieveMemory consistency
+  await client.waitForRememberJob(accepted.job_id);
+  return accepted;
 }
 
 /**
  * Retrieve recent memories from the MemWal decentralized relayer for a namespace.
  * 
  * @param namespace - The memory namespace/workspace ID.
- * @param apiKey - Optional API key/token for authorization.
+ * @param apiKey - Unused parameter retained for signature compatibility.
  * @returns The parsed JSON array of memories from the relayer.
  */
 export async function retrieveMemory(
   namespace: string,
   apiKey?: string
 ): Promise<any[]> {
-  const headers: Record<string, string> = {};
+  const client = getClient();
+  const recallResult = await client.recall('*', 50, namespace);
 
-  if (apiKey) {
-    headers['Authorization'] = apiKey.includes(' ') ? apiKey : `Bearer ${apiKey}`;
-  }
-
-  const response = await fetch(`https://api.memwal.ai/v1/memory/${namespace}`, {
-    method: 'GET',
-    headers,
-  });
-
-  if (!response.ok) {
-    let errorDetails = '';
+  return recallResult.results.map((r) => {
     try {
-      errorDetails = await response.text();
+      return JSON.parse(r.text);
     } catch {
-      // Ignore
+      return { author: 'System_Raw', note: r.text };
     }
-    throw new Error(
-      `Failed to retrieve memory from MemWal (HTTP ${response.status}): ${response.statusText}${
-        errorDetails ? ` - ${errorDetails}` : ''
-      }`
-    );
-  }
-
-  const result = await response.json();
-  
-  // Return the result array. Ensure we return an array.
-  // The backend might return {"memories": [...]} or just [...] directly.
-  // Let's inspect or normalize it:
-  if (Array.isArray(result)) {
-    return result;
-  }
-  if (result && typeof result === 'object' && Array.isArray(result.memories)) {
-    return result.memories;
-  }
-  if (result && typeof result === 'object' && Array.isArray(result.results)) {
-    return result.results;
-  }
-  
-  // Fallback to returning result wrapped as list if it's not already an array
-  return result ? [result] : [];
+  });
 }
