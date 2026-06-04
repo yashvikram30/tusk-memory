@@ -4,9 +4,9 @@
  * @param content - The raw string/markdown content to upload.
  * @returns The generated blob ID (blobId).
  */
-export async function uploadToWalrus(content: string): Promise<string> {
+export async function uploadToWalrus(content: string, epochs: number = 5): Promise<string> {
   const response = await fetch(
-    'https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=1',
+    `https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=${epochs}`,
     {
       method: 'PUT',
       headers: {

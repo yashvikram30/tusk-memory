@@ -84,7 +84,7 @@ export class Workspace {
    * @param topic - The topic of the debate/report.
    * @returns The generated blob ID from Walrus.
    */
-  async archiveReport(reportText: string, topic: string): Promise<string> {
+  async archiveReport(reportText: string, topic: string, epochs: number = 5): Promise<string> {
     if (!reportText) {
       throw new Error('reportText cannot be empty');
     }
@@ -93,7 +93,7 @@ export class Workspace {
     }
 
     // 1. Upload report directly to Walrus Testnet
-    const blobId = await uploadToWalrus(reportText);
+    const blobId = await uploadToWalrus(reportText, epochs);
 
     // 2. Format index metadata payload
     const archivePayload: ArchiveRecord = {

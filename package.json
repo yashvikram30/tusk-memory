@@ -1,15 +1,15 @@
 {
   "name": "tusk-memory",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "TypeScript SDK for decentralized shared agent memory and Walrus archival",
+  "type": "module",
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": "./dist/index.js"
     }
   },
   "files": [
@@ -19,7 +19,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "build": "tsup src/index.ts --format esm --clean --dts",
     "prepublishOnly": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 0"
   },
